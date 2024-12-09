@@ -13,18 +13,19 @@ class ToDoList extends Component {
         this.state = {
             task: "",
             comment: "",
-            worker: "", // ID выбранного работника
+            worker: "",
             time: "",
-            items: [], // Список задач
-            workers: [], // Список работников
+            items: [],
+            workers: [],
             error: "",
-            selectedLanguage: "en", // Выбранный язык перевода
+            selectedSourceLanguage: "en",
+            selectedTargetLanguage: "en",
             languages: [
                 { key: "en", text: "English", value: "en" },
                 { key: "de", text: "German", value: "de" },
                 { key: "kk", text: "Kazakh", value: "kk" },
                 { key: "ru", text: "Russian", value: "ru" },
-            ], // Список доступных языков
+            ],
         };
     }
 
@@ -33,7 +34,6 @@ class ToDoList extends Component {
         this.getWorkers();
     }
 
-    // Получение списка работников с сервера
     getWorkers = () => {
         axios
             .get(endpoint + "/api/workers")
@@ -56,7 +56,6 @@ class ToDoList extends Component {
             });
     };
 
-    // Получение списка задач
     getTask = () => {
         axios
             .get(endpoint + "/api/task")
@@ -79,7 +78,6 @@ class ToDoList extends Component {
         });
     };
 
-    // Создание новой задачи
     onSubmit = () => {
         const { task, comment, worker, time } = this.state;
 
@@ -104,7 +102,6 @@ class ToDoList extends Component {
         }
     };
 
-    // Завершение задачи
     markComplete = (id) => {
         axios
             .put(endpoint + `/api/task/${id}`, { status: true })
@@ -112,7 +109,6 @@ class ToDoList extends Component {
             .catch((error) => console.error("Error marking task as complete:", error));
     };
 
-    // Возврат задачи в активное состояние
     undoTask = (id) => {
         axios
             .put(endpoint + `/api/task/${id}`, { status: false })
@@ -120,7 +116,6 @@ class ToDoList extends Component {
             .catch((error) => console.error("Error undoing task completion:", error));
     };
 
-    // Удаление задачи
     deleteTask = (id) => {
         axios
             .delete(endpoint + `/api/task/${id}`)
@@ -128,23 +123,26 @@ class ToDoList extends Component {
             .catch((error) => console.error("Error deleting task:", error));
     };
 
-    // Перевод задач
     translateTasks = () => {
-        const { selectedLanguage } = this.state;
+        const { selectedSourceLanguage, selectedTargetLanguage } = this.state;
 
         axios
-            .post(endpoint + "/api/translateTasks", { language: selectedLanguage })
+            .post(endpoint + "/api/translateTasks", {
+                sourceLanguage: selectedSourceLanguage,
+                targetLanguage: selectedTargetLanguage,
+            })
             .then(() => {
-                this.getTask(); // Обновление списка задач
+                this.getTask();
                 alert("Tasks translated successfully!");
             })
             .catch((error) => {
                 console.error("Error translating tasks:", error);
+                this.setState({ error: "Failed to translate tasks." });
             });
     };
 
     render() {
-        const { workers, items, error, languages, selectedLanguage } = this.state;
+        const { workers, items, error, languages, selectedSourceLanguage, selectedTargetLanguage } = this.state;
 
         return (
             <div>
@@ -152,7 +150,28 @@ class ToDoList extends Component {
                     {CONSTANTS.HEADER_TEXT}
                 </Header>
 
-                {/* Форма добавления задачи */}
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginBottom: "10px" }}>
+                    <Dropdown
+                        placeholder="Source Language"
+                        fluid
+                        selection
+                        options={languages}
+                        value={selectedSourceLanguage}
+                        onChange={(e, { value }) => this.setState({ selectedSourceLanguage: value })}
+                    />
+                    <Dropdown
+                        placeholder="Target Language"
+                        fluid
+                        selection
+                        options={languages}
+                        value={selectedTargetLanguage}
+                        onChange={(e, { value }) => this.setState({ selectedTargetLanguage: value })}
+                    />
+                    <Button onClick={this.translateTasks} color="blue">
+                        Translate Tasks
+                    </Button>
+                </div>
+
                 <Form onSubmit={this.onSubmit}>
                     <Input
                         type="text"
@@ -192,23 +211,8 @@ class ToDoList extends Component {
                     </Button>
                 </Form>
 
-                {/* Выбор языка */}
-                <Dropdown
-                    placeholder="Select Language"
-                    fluid
-                    selection
-                    options={languages}
-                    value={selectedLanguage}
-                    onChange={(e, { value }) => this.setState({ selectedLanguage: value })}
-                />
-                <Button onClick={this.translateTasks} color="blue">
-                    Translate Tasks
-                </Button>
-
-                {/* Сообщение об ошибке */}
                 {error && <div style={{ color: "red" }}>{error}</div>}
 
-                {/* Отображение задач */}
                 {items.length > 0 ? (
                     <Card.Group>
                         {items.map((item) => {
@@ -254,4 +258,5 @@ class ToDoList extends Component {
 }
 
 export default ToDoList;
+
 

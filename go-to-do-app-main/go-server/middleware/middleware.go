@@ -285,7 +285,8 @@ func TranslateTasks(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	var req struct {
-		Language string `json:"language"`
+		SourceLanguage string `json:"sourceLanguage"`
+		TargetLanguage string `json:"targetLanguage"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -299,7 +300,7 @@ func TranslateTasks(w http.ResponseWriter, r *http.Request) {
 		texts = append(texts, task.TextTask, task.Comment)
 	}
 
-	translatedTexts, err := TranslateWithPython(texts, req.Language)
+	translatedTexts, err := TranslateWithPython(texts, req.SourceLanguage, req.TargetLanguage)
 	if err != nil {
 		log.Printf("Translation failed: %v", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -317,10 +318,11 @@ func TranslateTasks(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "tasks translated successfully"})
 }
 
-func TranslateWithPython(texts []string, language string) ([]string, error) {
+func TranslateWithPython(texts []string, sourceLanguage, targetLanguage string) ([]string, error) {
 	input := map[string]interface{}{
-		"language": language,
-		"texts":    texts,
+		"sourceLanguage": sourceLanguage,
+		"targetLanguage": targetLanguage,
+		"texts":          texts,
 	}
 	inputJSON, err := json.Marshal(input)
 	if err != nil {

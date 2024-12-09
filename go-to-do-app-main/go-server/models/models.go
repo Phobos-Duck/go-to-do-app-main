@@ -6,7 +6,7 @@ type ToDoList struct {
 	Comment  string `json:"comment"`
 	WorkerID int    `json:"worker_id"`
 	Time     string `json:"time"`
-	Status   bool   `json:"status"` // True означает завершено, false - не завершено
+	Status   bool   `json:"status"`
 }
 
 type Worker struct {
