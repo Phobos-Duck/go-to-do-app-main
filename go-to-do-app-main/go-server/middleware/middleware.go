@@ -3,11 +3,12 @@ package middleware
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
-	"net/http"
-
+	"fmt"
 	"github.com/gorilla/mux"
 	"go-server/models"
+	"log"
+	"net/http"
+	"os/exec"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -278,4 +279,65 @@ func updateTaskStatusByID(id string, status bool) error {
 
 	_, err = stmt.Exec(status, id)
 	return err
+}
+
+func TranslateTasks(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req struct {
+		Language string `json:"language"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "invalid request"})
+		return
+	}
+
+	tasks := getAllTasks()
+	texts := []string{}
+	for _, task := range tasks {
+		texts = append(texts, task.TextTask, task.Comment)
+	}
+
+	translatedTexts, err := TranslateWithPython(texts, req.Language)
+	if err != nil {
+		log.Printf("Translation failed: %v", err)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "translation failed"})
+		return
+	}
+
+	for i, task := range tasks {
+		task.TextTask = translatedTexts[i*2]
+		task.Comment = translatedTexts[i*2+1]
+		updateTaskByID(fmt.Sprintf("%d", task.ID), task)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "tasks translated successfully"})
+}
+
+func TranslateWithPython(texts []string, language string) ([]string, error) {
+	input := map[string]interface{}{
+		"language": language,
+		"texts":    texts,
+	}
+	inputJSON, err := json.Marshal(input)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal input: %v", err)
+	}
+
+	cmd := exec.Command("E:\\Users\\sine\\GolandProjects\\go-to-do-app-main\\venv\\Scripts\\python.exe", "E:\\Users\\sine\\GolandProjects\\go-to-do-app-main\\go-to-do-app-main\\translator.py", string(inputJSON))
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("error running translator: %v, output: %s", err, output)
+	}
+
+	var result map[string][]string
+	err = json.Unmarshal(output, &result)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal output: %v", err)
+	}
+
+	return result["translated"], nil
 }

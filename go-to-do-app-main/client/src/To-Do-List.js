@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import axios from "axios";
-import './To-Do.css'
+import "./To-Do.css";
 import { Card, Header, Form, Input, Button, Dropdown } from "semantic-ui-react";
-import { CONSTANTS } from './constants';
+import { CONSTANTS } from "./constants";
 
 let endpoint = "http://localhost:8080";
 
@@ -18,6 +18,13 @@ class ToDoList extends Component {
             items: [], // Список задач
             workers: [], // Список работников
             error: "",
+            selectedLanguage: "en", // Выбранный язык перевода
+            languages: [
+                { key: "en", text: "English", value: "en" },
+                { key: "de", text: "German", value: "de" },
+                { key: "kk", text: "Kazakh", value: "kk" },
+                { key: "ru", text: "Russian", value: "ru" },
+            ], // Список доступных языков
         };
     }
 
@@ -31,7 +38,6 @@ class ToDoList extends Component {
         axios
             .get(endpoint + "/api/workers")
             .then((res) => {
-                console.log("Workers fetched:", res.data); // Логируем данные работников
                 if (Array.isArray(res.data)) {
                     this.setState({
                         workers: res.data.map((worker) => ({
@@ -41,13 +47,12 @@ class ToDoList extends Component {
                         })),
                     });
                 } else {
-                    console.error("Invalid workers data format");
-                    this.setState({error: "Failed to load workers"});
+                    this.setState({ error: "Failed to load workers" });
                 }
             })
             .catch((error) => {
                 console.error("Error fetching workers:", error);
-                this.setState({error: "Failed to load workers"});
+                this.setState({ error: "Failed to load workers" });
             });
     };
 
@@ -56,22 +61,19 @@ class ToDoList extends Component {
         axios
             .get(endpoint + "/api/task")
             .then((res) => {
-                console.log("Tasks fetched:", res.data); // Логируем задачи
                 if (Array.isArray(res.data)) {
-                    this.setState({items: res.data});
+                    this.setState({ items: res.data });
                 } else {
-                    console.error("Invalid tasks data format");
-                    this.setState({items: [], error: "Failed to load tasks"});
+                    this.setState({ items: [], error: "Failed to load tasks" });
                 }
             })
             .catch((error) => {
                 console.error("Error fetching tasks:", error);
-                this.setState({items: [], error: "Failed to load tasks"});
+                this.setState({ items: [], error: "Failed to load tasks" });
             });
     };
 
-
-    onChange = (event, {name, value}) => {
+    onChange = (event, { name, value }) => {
         this.setState({
             [name]: value,
         });
@@ -79,33 +81,33 @@ class ToDoList extends Component {
 
     // Создание новой задачи
     onSubmit = () => {
-        const {task, comment, worker, time} = this.state;
+        const { task, comment, worker, time } = this.state;
 
         if (task && worker) {
             axios
                 .post(endpoint + "/api/task", {
                     text_task: task,
                     comment: comment,
-                    worker_id: worker, // ID сотрудника
+                    worker_id: worker,
                     time: time,
                 })
                 .then(() => {
                     this.getTask();
-                    this.setState({task: "", comment: "", worker: "", time: "", error: ""});
+                    this.setState({ task: "", comment: "", worker: "", time: "", error: "" });
                 })
                 .catch((error) => {
                     console.error("Error submitting task:", error.response?.data || error.message);
-                    this.setState({error: "Failed to add task. Please check input."});
+                    this.setState({ error: "Failed to add task. Please check input." });
                 });
         } else {
-            this.setState({error: "Please fill all required fields."});
+            this.setState({ error: "Please fill all required fields." });
         }
     };
 
     // Завершение задачи
     markComplete = (id) => {
         axios
-            .put(endpoint + `/api/task/${id}`, {status: true})
+            .put(endpoint + `/api/task/${id}`, { status: true })
             .then(() => this.getTask())
             .catch((error) => console.error("Error marking task as complete:", error));
     };
@@ -113,7 +115,7 @@ class ToDoList extends Component {
     // Возврат задачи в активное состояние
     undoTask = (id) => {
         axios
-            .put(endpoint + `/api/task/${id}`, {status: false})
+            .put(endpoint + `/api/task/${id}`, { status: false })
             .then(() => this.getTask())
             .catch((error) => console.error("Error undoing task completion:", error));
     };
@@ -126,13 +128,28 @@ class ToDoList extends Component {
             .catch((error) => console.error("Error deleting task:", error));
     };
 
+    // Перевод задач
+    translateTasks = () => {
+        const { selectedLanguage } = this.state;
+
+        axios
+            .post(endpoint + "/api/translateTasks", { language: selectedLanguage })
+            .then(() => {
+                this.getTask(); // Обновление списка задач
+                alert("Tasks translated successfully!");
+            })
+            .catch((error) => {
+                console.error("Error translating tasks:", error);
+            });
+    };
+
     render() {
-        const {workers, items, error} = this.state;
+        const { workers, items, error, languages, selectedLanguage } = this.state;
 
         return (
             <div>
                 <Header as="h2" className="header">
-                    TO DO LIST
+                    {CONSTANTS.HEADER_TEXT}
                 </Header>
 
                 {/* Форма добавления задачи */}
@@ -175,15 +192,28 @@ class ToDoList extends Component {
                     </Button>
                 </Form>
 
+                {/* Выбор языка */}
+                <Dropdown
+                    placeholder="Select Language"
+                    fluid
+                    selection
+                    options={languages}
+                    value={selectedLanguage}
+                    onChange={(e, { value }) => this.setState({ selectedLanguage: value })}
+                />
+                <Button onClick={this.translateTasks} color="blue">
+                    Translate Tasks
+                </Button>
+
                 {/* Сообщение об ошибке */}
-                {error && <div style={{color: "red"}}>{error}</div>}
+                {error && <div style={{ color: "red" }}>{error}</div>}
 
                 {/* Отображение задач */}
                 {items.length > 0 ? (
                     <Card.Group>
                         {items.map((item) => {
                             let color = item.status ? "green" : "yellow";
-                            let style = {wordWrap: "break-word"};
+                            let style = { wordWrap: "break-word" };
                             if (item.status) style["textDecorationLine"] = "line-through";
 
                             return (
@@ -191,29 +221,20 @@ class ToDoList extends Component {
                                     <Card.Content>
                                         <Card.Header textAlign="left">{item.text_task}</Card.Header>
                                         <Card.Meta textAlign="left">
-                                            {`Сотрудник: ${item.worker_id}, Сроки до: ${item.time}`}
+                                            {`Worker: ${item.worker_id}, Deadline: ${item.time}`}
                                         </Card.Meta>
                                         <Card.Description>{item.comment}</Card.Description>
                                         <Card.Meta textAlign="right">
                                             {!item.status ? (
-                                                <Button
-                                                    color="green"
-                                                    onClick={() => this.markComplete(item.id)}
-                                                >
+                                                <Button color="green" onClick={() => this.markComplete(item.id)}>
                                                     {CONSTANTS.COMPLETE_BUTTON}
                                                 </Button>
                                             ) : (
-                                                <Button
-                                                    color="yellow"
-                                                    onClick={() => this.undoTask(item.id)}
-                                                >
+                                                <Button color="yellow" onClick={() => this.undoTask(item.id)}>
                                                     {CONSTANTS.UNDO_BUTTON}
                                                 </Button>
                                             )}
-                                            <Button
-                                                color="red"
-                                                onClick={() => this.deleteTask(item.id)}
-                                            >
+                                            <Button color="red" onClick={() => this.deleteTask(item.id)}>
                                                 {CONSTANTS.DELETE_BUTTON}
                                             </Button>
                                         </Card.Meta>
@@ -223,8 +244,8 @@ class ToDoList extends Component {
                         })}
                     </Card.Group>
                 ) : (
-                    <div style={{marginTop: "20px", textAlign: "center"}}>
-                        <p>No tasks found. Add a new task!</p>
+                    <div style={{ marginTop: "20px", textAlign: "center" }}>
+                        <p>{CONSTANTS.EMPTY_TASK_LIST}</p>
                     </div>
                 )}
             </div>
@@ -233,3 +254,4 @@ class ToDoList extends Component {
 }
 
 export default ToDoList;
+

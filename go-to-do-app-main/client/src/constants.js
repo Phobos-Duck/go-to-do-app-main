@@ -1,5 +1,5 @@
 export const CONSTANTS = {
-    HEADER_TEXT: "TO DO LIST",
+    HEADER_TEXT: "Лист Задач",
     TASK_PLACEHOLDER: "Название",
     COMMENT_PLACEHOLDER: "Комментарий",
     WORKER_PLACEHOLDER: "Имя выполняющего",

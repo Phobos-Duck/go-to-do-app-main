@@ -32,12 +32,11 @@ func Router() *mux.Router {
 	router.HandleFunc("/api/task", middleware.GetAllTask).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/task", middleware.CreateTask).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/task/{id}", middleware.UpdateTask).Methods("PUT", "OPTIONS")
-	//router.HandleFunc("/api/task/{id}", middleware.TaskComplete).Methods("PUT", "OPTIONS")
-	//router.HandleFunc("/api/undoTask/{id}", middleware.UndoTask).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/api/deleteTask/{id}", middleware.DeleteTask).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/api/deleteAllTask", middleware.DeleteAllTask).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/api/task/{id}", middleware.UpdateTaskStatus).Methods("PUT")
 	router.HandleFunc("/api/task/{id}", middleware.DeleteTask).Methods("DELETE")
 	router.HandleFunc("/api/workers", middleware.GetAllWorkers).Methods("GET")
+	router.HandleFunc("/api/translateTasks", middleware.TranslateTasks).Methods("POST", "OPTIONS")
 	return router
 }
