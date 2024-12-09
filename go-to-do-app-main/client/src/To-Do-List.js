@@ -18,13 +18,15 @@ class ToDoList extends Component {
             items: [],
             workers: [],
             error: "",
-            selectedSourceLanguage: "en",
+            editingTaskId: null, // ID задачи, которую редактируем
+            editTaskInput: {},
+            selectedSourceLanguage: "ru",
             selectedTargetLanguage: "en",
             languages: [
                 { key: "en", text: "English", value: "en" },
-                { key: "de", text: "German", value: "de" },
-                { key: "kk", text: "Kazakh", value: "kk" },
-                { key: "ru", text: "Russian", value: "ru" },
+                { key: "de", text: "Deutsch", value: "de" },
+                { key: "kk", text: "Қазақша", value: "kk" },
+                { key: "ru", text: "Русский", value: "ru" },
             ],
         };
     }
@@ -95,10 +97,10 @@ class ToDoList extends Component {
                 })
                 .catch((error) => {
                     console.error("Error submitting task:", error.response?.data || error.message);
-                    this.setState({ error: "Failed to add task. Please check input." });
+                    this.setState({ error: "Ошибка при добавлении задачи. Пожалуйста попробуйте ещё раз" });
                 });
         } else {
-            this.setState({ error: "Please fill all required fields." });
+            this.setState({ error: "Пожалуйста заполните все обязательные поля" });
         }
     };
 
@@ -133,11 +135,52 @@ class ToDoList extends Component {
             })
             .then(() => {
                 this.getTask();
-                alert("Tasks translated successfully!");
+                alert("Задачи переведены успешно!");
             })
             .catch((error) => {
-                console.error("Error translating tasks:", error);
-                this.setState({ error: "Failed to translate tasks." });
+                console.error("Ошибка перевода задач:", error);
+                let errorMessage = "Ошибка перевода задач";
+                if (error.response?.data?.error?.includes("Пожалуйста попробуйте сначала перевести на английский язык")) {
+                    errorMessage += " Попробуйте сначала перевести на английский язык";
+                }
+                this.setState({ error: errorMessage });
+            });
+    };
+    startEditing = (task) => {
+        this.setState({
+            editingTaskId: task.id,
+            editTaskInput: {
+                text_task: task.text_task,
+                comment: task.comment,
+                worker_id: task.worker_id,
+                time: task.time,
+            },
+        });
+    };
+
+    handleEditChange = (e, { name, value }) => {
+        this.setState((prevState) => ({
+            editTaskInput: { ...prevState.editTaskInput, [name]: value },
+        }));
+    };
+
+    saveTaskChanges = () => {
+        const { editingTaskId, editTaskInput } = this.state;
+
+        axios
+            .put(endpoint + `/api/task/${editingTaskId}`, {
+                text_task: editTaskInput.text_task,
+                comment: editTaskInput.comment,
+                worker_id: editTaskInput.worker_id,
+                time: editTaskInput.time,
+            })
+            .then(() => {
+                this.getTask(); // Обновляем список задач
+                this.setState({ editingTaskId: null, editTaskInput: {} }); // Сбрасываем состояние редактирования
+            })
+            .catch((error) => {
+                console.error("Error saving task changes:", error);
+                this.setState({ error: "Ошибка сохранения изменений" });
             });
     };
 
@@ -152,7 +195,7 @@ class ToDoList extends Component {
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginBottom: "10px" }}>
                     <Dropdown
-                        placeholder="Source Language"
+                        placeholder="Исходный язык"
                         fluid
                         selection
                         options={languages}
@@ -160,7 +203,7 @@ class ToDoList extends Component {
                         onChange={(e, { value }) => this.setState({ selectedSourceLanguage: value })}
                     />
                     <Dropdown
-                        placeholder="Target Language"
+                        placeholder="Перевести на..."
                         fluid
                         selection
                         options={languages}
@@ -168,7 +211,7 @@ class ToDoList extends Component {
                         onChange={(e, { value }) => this.setState({ selectedTargetLanguage: value })}
                     />
                     <Button onClick={this.translateTasks} color="blue">
-                        Translate Tasks
+                        Перевести задачи
                     </Button>
                 </div>
 
@@ -216,33 +259,74 @@ class ToDoList extends Component {
                 {items.length > 0 ? (
                     <Card.Group>
                         {items.map((item) => {
-                            let color = item.status ? "green" : "yellow";
-                            let style = { wordWrap: "break-word" };
-                            if (item.status) style["textDecorationLine"] = "line-through";
+                            const isEditing = this.state.editingTaskId === item.id;
 
                             return (
-                                <Card key={item.id} color={color} fluid>
+                                <Card key={item.id} color="blue" fluid>
                                     <Card.Content>
-                                        <Card.Header textAlign="left">{item.text_task}</Card.Header>
-                                        <Card.Meta textAlign="left">
-                                            {`Worker: ${item.worker_id}, Deadline: ${item.time}`}
-                                        </Card.Meta>
-                                        <Card.Description>{item.comment}</Card.Description>
-                                        <Card.Meta textAlign="right">
-                                            {!item.status ? (
-                                                <Button color="green" onClick={() => this.markComplete(item.id)}>
-                                                    {CONSTANTS.COMPLETE_BUTTON}
-                                                </Button>
-                                            ) : (
-                                                <Button color="yellow" onClick={() => this.undoTask(item.id)}>
-                                                    {CONSTANTS.UNDO_BUTTON}
-                                                </Button>
-                                            )}
-                                            <Button color="red" onClick={() => this.deleteTask(item.id)}>
-                                                {CONSTANTS.DELETE_BUTTON}
-                                            </Button>
-                                        </Card.Meta>
+                                        {!isEditing ? (
+                                            <>
+                                                <Card.Header>{item.text_task}</Card.Header>
+                                                <Card.Meta>{`Ответственный: ${item.worker_id}, Сроки до: ${item.time}`}</Card.Meta>
+                                                <Card.Description>{item.comment}</Card.Description>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Input
+                                                    fluid
+                                                    placeholder="Task name"
+                                                    name="text_task"
+                                                    value={this.state.editTaskInput.text_task}
+                                                    onChange={this.handleEditChange}
+                                                />
+                                                <Input
+                                                    fluid
+                                                    placeholder="Comment"
+                                                    name="comment"
+                                                    value={this.state.editTaskInput.comment}
+                                                    onChange={this.handleEditChange}
+                                                />
+                                                <Dropdown
+                                                    fluid
+                                                    placeholder="Select worker"
+                                                    name="worker_id"
+                                                    selection
+                                                    options={workers}
+                                                    value={this.state.editTaskInput.worker_id}
+                                                    onChange={this.handleEditChange}
+                                                />
+                                                <Input
+                                                    type="datetime-local"
+                                                    placeholder="Deadline"
+                                                    name="time"
+                                                    value={this.state.editTaskInput.time}
+                                                    onChange={this.handleEditChange}
+                                                    fluid
+                                                />
+                                            </>
+                                        )}
                                     </Card.Content>
+                                    <Card.Meta textAlign="right">
+                                        {!isEditing ? (
+                                            <>
+                                                <Button color="blue" onClick={() => this.startEditing(item)}>
+                                                    Изменить
+                                                </Button>
+                                                <Button color="red" onClick={() => this.deleteTask(item.id)}>
+                                                    {CONSTANTS.DELETE_BUTTON}
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Button color="green" onClick={this.saveTaskChanges}>
+                                                    Сохранить
+                                                </Button>
+                                                <Button color="grey" onClick={() => this.setState({ editingTaskId: null })}>
+                                                    Отмена
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Card.Meta>
                                 </Card>
                             );
                         })}
