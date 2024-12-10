@@ -13,10 +13,10 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// DB instance
+
 var db *sql.DB
 
-// Initialize the database and create table
+
 func init() {
 	createDBInstance()
 }
@@ -78,14 +78,12 @@ func GetAllWorkers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(workers)
 }
 
-// GetAllTask retrieves all tasks
 func GetAllTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	tasks := getAllTasks()
 	json.NewEncoder(w).Encode(tasks)
 }
 
-// CreateTask adds a new task
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -118,7 +116,6 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "task added successfully"})
 }
 
-// UpdateTask modifies an existing task
 func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
@@ -140,7 +137,6 @@ func UpdateTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(task)
 }
 
-// DeleteTask removes a single task by ID
 func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
@@ -154,7 +150,6 @@ func DeleteTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"message": "task deleted"})
 }
 
-// DeleteAllTask removes all tasks from the database
 func DeleteAllTask(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -168,7 +163,6 @@ func DeleteAllTask(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]int{"deleted": count})
 }
 
-// getAllTasks fetches all tasks from the database
 func getAllTasks() []models.ToDoList {
 	rows, err := db.Query("SELECT id, text_task, comment, worker_id, time FROM tasks")
 	if err != nil {
@@ -191,7 +185,6 @@ func getAllTasks() []models.ToDoList {
 	return tasks
 }
 
-// insertOneTask inserts a new task into the database
 func insertOneTask(task models.ToDoList) error {
 	stmt, err := db.Prepare("INSERT INTO tasks (text_task, comment, worker_id, time) VALUES (?, ?, ?, ?)")
 	if err != nil {
@@ -203,7 +196,6 @@ func insertOneTask(task models.ToDoList) error {
 	return err
 }
 
-// updateTaskByID updates a task's details in the database
 func updateTaskByID(id string, task models.ToDoList) error {
 	stmt, err := db.Prepare("UPDATE tasks SET text_task = ?, comment = ?, worker_id = ?, time = ? WHERE id = ?")
 	if err != nil {
@@ -215,7 +207,6 @@ func updateTaskByID(id string, task models.ToDoList) error {
 	return err
 }
 
-// deleteOneTask removes a task by its ID
 func deleteOneTask(id string) error {
 	stmt, err := db.Prepare("DELETE FROM tasks WHERE id = ?")
 	if err != nil {
@@ -227,7 +218,6 @@ func deleteOneTask(id string) error {
 	return err
 }
 
-// deleteAllTasks removes all tasks from the database
 func deleteAllTasks() (int, error) {
 	stmt, err := db.Prepare("DELETE FROM tasks")
 	if err != nil {
@@ -248,7 +238,6 @@ func deleteAllTasks() (int, error) {
 	return int(count), nil
 }
 
-// Обновление статуса задачи (завершена или нет)
 func UpdateTaskStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
