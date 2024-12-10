@@ -43,9 +43,8 @@ class ToDoList extends Component {
                 if (Array.isArray(res.data)) {
                     this.setState({
                         workers: res.data.map((worker) => ({
-                            key: worker.id,
-                            text: worker.name,
-                            value: worker.id,
+                            id: worker.id,
+                            name: worker.name,
                         })),
                     });
                 } else {
@@ -146,6 +145,7 @@ class ToDoList extends Component {
                 this.setState({ error: errorMessage });
             });
     };
+
     startEditing = (task) => {
         this.setState({
             editingTaskId: task.id,
@@ -175,8 +175,8 @@ class ToDoList extends Component {
                 time: editTaskInput.time,
             })
             .then(() => {
-                this.getTask(); // Обновляем список задач
-                this.setState({ editingTaskId: null, editTaskInput: {} }); // Сбрасываем состояние редактирования
+                this.getTask();
+                this.setState({ editingTaskId: null, editTaskInput: {} });
             })
             .catch((error) => {
                 console.error("Error saving task changes:", error);
@@ -184,8 +184,18 @@ class ToDoList extends Component {
             });
     };
 
+    formatDate = (dateString) => {
+        const options = { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" };
+        return new Date(dateString).toLocaleDateString("ru-RU", options);
+    };
+
     render() {
         const { workers, items, error, languages, selectedSourceLanguage, selectedTargetLanguage } = this.state;
+
+        const getWorkerName = (workerId) => {
+            const worker = workers.find((w) => w.id === workerId);
+            return worker ? worker.name : "Неизвестно";
+        };
 
         return (
             <div>
@@ -237,7 +247,11 @@ class ToDoList extends Component {
                         fluid
                         selection
                         name="worker"
-                        options={workers}
+                        options={workers.map((worker) => ({
+                            key: worker.id,
+                            text: worker.name,
+                            value: worker.id,
+                        }))}
                         value={this.state.worker}
                         onChange={this.onChange}
                     />
@@ -267,7 +281,7 @@ class ToDoList extends Component {
                                         {!isEditing ? (
                                             <>
                                                 <Card.Header>{item.text_task}</Card.Header>
-                                                <Card.Meta>{`Ответственный: ${item.worker_id}, Сроки до: ${item.time}`}</Card.Meta>
+                                                <Card.Meta>{`Ответственный: ${getWorkerName(item.worker_id)}, Сроки до: ${this.formatDate(item.time)}`}</Card.Meta>
                                                 <Card.Description>{item.comment}</Card.Description>
                                             </>
                                         ) : (
@@ -291,7 +305,11 @@ class ToDoList extends Component {
                                                     placeholder="Select worker"
                                                     name="worker_id"
                                                     selection
-                                                    options={workers}
+                                                    options={workers.map((worker) => ({
+                                                        key: worker.id,
+                                                        text: worker.name,
+                                                        value: worker.id,
+                                                    }))}
                                                     value={this.state.editTaskInput.worker_id}
                                                     onChange={this.handleEditChange}
                                                 />
@@ -342,5 +360,6 @@ class ToDoList extends Component {
 }
 
 export default ToDoList;
+
 
 

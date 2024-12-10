@@ -1,7 +1,7 @@
 /* Основной стиль страницы */
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(to right, #000A3D, #477A90); /* Градиент фона с приглушёнными синими тонами */
+    background: linear-gradient(to right, #3D005C, #7A477A); /* Градиент фона с приглушёнными сиреневыми тонами */
     color: #ffffff;
     margin: 0;
     padding: 0;
@@ -47,7 +47,7 @@ input[type="datetime-local"],
     padding: 15px;
     font-size: 1rem;
     border-radius: 8px;
-    border: 2px solid #44BB8F;
+    border: 2px solid #BB44A3;
     background-color: rgba(255, 255, 255, 0.2);
     color: #ffffff;
     transition: all 0.3s ease;
@@ -55,7 +55,7 @@ input[type="datetime-local"],
 
 input[type="text"]::placeholder,
 input[type="datetime-local"]::placeholder {
-    color: #b5c6d6; /* Серый placeholder */
+    color: #d6b5d6; /* Серый placeholder с оттенком сиреневого */
 }
 
 input[type="text"]:focus,
@@ -74,7 +74,7 @@ input[type="datetime-local"]:focus {
 .ui.selection.dropdown:hover,
 input[type="text"]:hover,
 input[type="datetime-local"]:hover {
-    border-color: #477A90;
+    border-color: #7A477A;
 }
 
 /* Стиль для кнопок */
@@ -85,8 +85,8 @@ button,
     font-weight: bold;
     border-radius: 8px;
     border: none;
-    background-color: #44BB8F; /* Основной зелёный цвет */
-    color: #000A3D;
+    background-color: #BB44A3; /* Основной сиреневый цвет */
+    color: #3D005C;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -122,12 +122,12 @@ button:focus,
 .card .header {
     font-size: 1.6rem;
     font-weight: bold;
-    color: #44BB8F;
+    color: #BB44A3;
 }
 
 .card .meta {
     font-size: 1rem;
-    color: #477A90;
+    color: #7A477A;
 }
 
 .card .description {
@@ -140,12 +140,12 @@ button:focus,
     margin-top: 15px;
     font-size: 0.9rem;
     padding: 10px 12px;
-    background-color: #477A90;
+    background-color: #7A477A;
     color: white;
 }
 
 .card button:hover {
-    background-color: #44BB8F;
+    background-color: #BB44A3;
     transform: scale(1.03);
 }
 
