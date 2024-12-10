@@ -9,7 +9,7 @@ import (
 
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // Разрешить только React
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -23,12 +23,10 @@ func enableCORS(next http.Handler) http.Handler {
 	})
 }
 
-// Router is exported and used in main.go
 func Router() *mux.Router {
 	router := mux.NewRouter()
 
 	router.Use(enableCORS)
-	// Endpoints for Task operations
 	router.HandleFunc("/api/task", middleware.GetAllTask).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/task", middleware.CreateTask).Methods("POST", "OPTIONS")
 	router.HandleFunc("/api/task/{id}", middleware.UpdateTask).Methods("PUT", "OPTIONS")
